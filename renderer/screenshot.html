@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>截图选区</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: transparent;
+    cursor: crosshair;
+  }
+  #overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.45);
+  }
+  #selection {
+    position: fixed;
+    border: 2px solid #6c63ff;
+    box-shadow:
+      0 0 0 1px rgba(108,99,255,0.5),
+      inset 0 0 0 1px rgba(255,255,255,0.1);
+    background: rgba(108, 99, 255, 0.05);
+    display: none;
+    pointer-events: none;
+  }
+  /* 角落控制点 */
+  .corner {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #6c63ff;
+    border: 2px solid #fff;
+    border-radius: 2px;
+    box-shadow: 0 0 4px rgba(0,0,0,0.5);
+  }
+  .corner.tl { top: -5px; left: -5px; }
+  .corner.tr { top: -5px; right: -5px; }
+  .corner.bl { bottom: -5px; left: -5px; }
+  .corner.br { bottom: -5px; right: -5px; }
+  /* 边框中点 */
+  .edge {
+    position: absolute;
+    background: #a78bfa;
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 2px;
+  }
+  .edge.top, .edge.bottom { width: 20px; height: 5px; left: 50%; transform: translateX(-50%); }
+  .edge.left, .edge.right { width: 5px; height: 20px; top: 50%; transform: translateY(-50%); }
+  .edge.top { top: -3px; }
+  .edge.bottom { bottom: -3px; }
+  .edge.left { left: -3px; }
+  .edge.right { right: -3px; }
+
+  #tooltip {
+    position: fixed;
+    background: rgba(20, 20, 30, 0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(108,99,255,0.4);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: #e8e8e8;
+    font: 12px 'Segoe UI', system-ui, sans-serif;
+    pointer-events: none;
+    white-space: nowrap;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  #tooltip .size-info { color: #a78bfa; font-weight: 600; }
+
+  #toolbar {
+    position: fixed;
+    display: none;
+    background: rgba(20, 20, 30, 0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 10px;
+    padding: 6px 8px;
+    gap: 4px;
+    z-index: 2000;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    align-items: center;
+  }
+  .tb-btn {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .tb-btn.confirm {
+    background: linear-gradient(135deg, #6c63ff, #8b5cf6);
+    color: #fff;
+    width: auto;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 600;
+    gap: 5px;
+  }
+  .tb-btn.cancel {
+    background: rgba(248,113,113,0.15);
+    color: #f87171;
+    border: 1px solid rgba(248,113,113,0.3);
+  }
+  .tb-btn:not(.confirm):not(.cancel) {
+    background: rgba(255,255,255,0.05);
+    color: #e8e8e8;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .tb-btn:hover:not(.confirm):not(.cancel) { background: rgba(255,255,255,0.12); }
+  .tb-btn.confirm:hover { opacity: 0.9; }
+  .tb-btn.cancel:hover { background: rgba(248,113,113,0.25); }
+  .tb-divider { width: 1px; height: 22px; background: rgba(255,255,255,0.1); margin: 0 2px; }
+
+  #hint-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: rgba(255,255,255,0.7);
+    font: 15px 'Segoe UI', system-ui, sans-serif;
+    pointer-events: none;
+    line-height: 2;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  }
+  #hint-text .key {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    padding: 1px 8px;
+    font-size: 13px;
+  }
+  #hint-text.hidden { display: none; }
+
+  #magnifier {
+    position: fixed;
+    width: 120px;
+    height: 80px;
+    border: 2px solid rgba(108,99,255,0.8);
+    border-radius: 8px;
+    overflow: hidden;
+    pointer-events: none;
+    display: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    z-index: 999;
+  }
+  #mag-canvas { display: block; }
+  #mag-crosshair {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px; height: 16px;
+    pointer-events: none;
+  }
+  #mag-crosshair::before, #mag-crosshair::after {
+    content: '';
+    position: absolute;
+    background: rgba(108,99,255,0.9);
+  }
+  #mag-crosshair::before { width: 1px; height: 100%; left: 50%; }
+  #mag-crosshair::after { height: 1px; width: 100%; top: 50%; }
+  #mag-coords {
+    position: absolute;
+    bottom: 2px;
+    left: 0; right: 0;
+    text-align: center;
+    font: 10px monospace;
+    color: rgba(255,255,255,0.8);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div id="overlay"></div>
+<div id="selection">
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+  <div class="edge top"></div>
+  <div class="edge bottom"></div>
+  <div class="edge left"></div>
+  <div class="edge right"></div>
+</div>
+<div id="tooltip"><span class="size-info" id="size-info">0 × 0</span></div>
+<div id="toolbar">
+  <button class="tb-btn confirm" id="confirm-btn">✓ 翻译</button>
+  <div class="tb-divider"></div>
+  <button class="tb-btn cancel" id="cancel-btn">✕</button>
+</div>
+<div id="hint-text">
+  🖱 拖拽选择截图区域<br>
+  <span class="key">ESC</span> 取消
+</div>
+<div id="magnifier">
+  <canvas id="mag-canvas" width="120" height="80"></canvas>
+  <div id="mag-crosshair"></div>
+  <div id="mag-coords" id="mag-coords">0, 0</div>
+</div>
+
+<script>
+let startX = 0, startY = 0;
+let isDragging = false;
+let selectionRect = null;
+let confirmed = false;
+let screenWidth = window.screen.width;
+let screenHeight = window.screen.height;
+
+const overlay = document.getElementById('overlay');
+const selection = document.getElementById('selection');
+const tooltip = document.getElementById('tooltip');
+const sizeInfo = document.getElementById('size-info');
+const toolbar = document.getElementById('toolbar');
+const hintText = document.getElementById('hint-text');
+
+// 接收屏幕信息
+window.electronAPI.on('screenshot-window-ready', (data) => {
+  if (data && data.displays) {
+    const primary = data.displays[0];
+    if (primary) {
+      screenWidth = primary.width;
+      screenHeight = primary.height;
+    }
+  }
+});
+
+// ── 鼠标事件 ──
+document.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  if (toolbar.style.display !== 'none' && toolbar.contains(e.target)) return;
+
+  isDragging = true;
+  confirmed = false;
+  startX = e.clientX;
+  startY = e.clientY;
+
+  selection.style.display = 'block';
+  selection.style.left = startX + 'px';
+  selection.style.top = startY + 'px';
+  selection.style.width = '0';
+  selection.style.height = '0';
+  toolbar.style.display = 'none';
+  hintText.classList.add('hidden');
+  tooltip.style.display = 'block';
+});
+
+document.addEventListener('mousemove', (e) => {
+  const x = e.clientX;
+  const y = e.clientY;
+
+  if (isDragging) {
+    const left = Math.min(x, startX);
+    const top = Math.min(y, startY);
+    const width = Math.abs(x - startX);
+    const height = Math.abs(y - startY);
+
+    selection.style.left = left + 'px';
+    selection.style.top = top + 'px';
+    selection.style.width = width + 'px';
+    selection.style.height = height + 'px';
+
+    sizeInfo.textContent = width + ' × ' + height;
+
+    // Tooltip 位置
+    let tx = e.clientX + 14;
+    let ty = e.clientY + 14;
+    if (tx + 140 > window.innerWidth) tx = e.clientX - 154;
+    if (ty + 32 > window.innerHeight) ty = e.clientY - 46;
+    tooltip.style.left = tx + 'px';
+    tooltip.style.top = ty + 'px';
+  }
+});
+
+document.addEventListener('mouseup', (e) => {
+  if (!isDragging) return;
+  isDragging = false;
+
+  const left = parseInt(selection.style.left);
+  const top = parseInt(selection.style.top);
+  const width = parseInt(selection.style.width);
+  const height = parseInt(selection.style.height);
+
+  tooltip.style.display = 'none';
+
+  if (width < 10 || height < 10) {
+    // 太小，重置
+    selection.style.display = 'none';
+    hintText.classList.remove('hidden');
+    return;
+  }
+
+  selectionRect = { left, top, width, height };
+
+  // 显示工具栏
+  let tbX = left + width;
+  let tbY = top + height + 8;
+  if (tbX + 140 > window.innerWidth) tbX = left + width - 140;
+  if (tbY + 50 > window.innerHeight) tbY = top - 50;
+
+  toolbar.style.display = 'flex';
+  toolbar.style.left = tbX + 'px';
+  toolbar.style.top = tbY + 'px';
+});
+
+// ── 确认截图 ──
+document.getElementById('confirm-btn').addEventListener('click', () => {
+  if (!selectionRect || confirmed) return;
+  confirmed = true;
+  toolbar.style.display = 'none';
+
+  window.electronAPI.screenshotSelected({
+    x: selectionRect.left,
+    y: selectionRect.top,
+    width: selectionRect.width,
+    height: selectionRect.height,
+    screenX: selectionRect.left,
+    screenY: selectionRect.top + selectionRect.height + 60,
+    screenWidth,
+    screenHeight
+  });
+});
+
+// ── 取消 ──
+function cancel() {
+  window.electronAPI.screenshotCancelled();
+}
+
+document.getElementById('cancel-btn').addEventListener('click', cancel);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') cancel();
+  if (e.key === 'Enter' && selectionRect && !confirmed) {
+    document.getElementById('confirm-btn').click();
+  }
+});
+
+// ── 双击快速确认 ──
+document.addEventListener('dblclick', () => {
+  if (selectionRect && !confirmed && toolbar.style.display !== 'none') {
+    document.getElementById('confirm-btn').click();
+  }
+});
+</script>
+</body>
+</html>

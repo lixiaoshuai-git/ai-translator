@@ -1,0 +1,16 @@
+# 自动判断文本/二进制文件，提交时统一转为 LF
+* text=auto
+
+# 明确声明文本文件
+*.js    text
+*.json  text
+*.html  text
+*.css   text
+*.md    text
+*.yml   text
+*.yaml  text
+
+# 二进制文件，不做换行符转换，也不做 diff 合并
+*.png   binary
+*.ico   binary
+*.zip   binary

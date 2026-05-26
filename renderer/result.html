@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>翻译结果</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: rgba(13, 13, 18, 0.96);
+    --surface: rgba(22, 22, 30, 0.95);
+    --border: rgba(108, 99, 255, 0.3);
+    --accent: #6c63ff;
+    --accent2: #a78bfa;
+    --text: #e8e8e8;
+    --text-secondary: #999;
+    --success: #34d399;
+    --error: #f87171;
+  }
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+    -webkit-app-region: drag;
+  }
+  #container {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    backdrop-filter: blur(30px) saturate(180%);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(108,99,255,0.15),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  #header {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px 8px;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+    -webkit-app-region: drag;
+  }
+  .header-icon {
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .header-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+  .header-actions {
+    display: flex;
+    gap: 4px;
+    -webkit-app-region: no-drag;
+  }
+  .hbtn {
+    width: 26px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .hbtn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+  .hbtn.close:hover { background: rgba(248,113,113,0.2); color: #f87171; }
+
+  #image-preview {
+    flex-shrink: 0;
+    max-height: 100px;
+    overflow: hidden;
+    position: relative;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: none;
+  }
+  #image-preview img {
+    width: 100%;
+    object-fit: cover;
+    object-position: top;
+    display: block;
+    opacity: 0.7;
+  }
+  #image-preview .img-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 60%, var(--bg));
+  }
+
+  #status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent2);
+    flex-shrink: 0;
+  }
+  .status-dot.loading { animation: pulse 1s ease-in-out infinite; }
+  .status-dot.success { background: var(--success); }
+  .status-dot.error { background: var(--error); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .status-text {
+    font-size: 11px;
+    color: var(--text-secondary);
+    flex: 1;
+  }
+  .status-time {
+    font-size: 10px;
+    color: rgba(255,255,255,0.2);
+  }
+
+  #result-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    -webkit-app-region: no-drag;
+    min-height: 0;
+  }
+  #result-text {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  #result-text.loading-state {
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+  .loading-dots::after {
+    content: '';
+    animation: dots 1.2s steps(4, end) infinite;
+  }
+  @keyframes dots {
+    0%   { content: ''; }
+    25%  { content: '.'; }
+    50%  { content: '..'; }
+    75%  { content: '...'; }
+    100% { content: ''; }
+  }
+  #error-text {
+    font-size: 12px;
+    color: var(--error);
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: none;
+    line-height: 1.5;
+  }
+  #error-text.show { display: block; }
+
+  #footer {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    gap: 6px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+    -webkit-app-region: no-drag;
+  }
+  .foot-btn {
+    height: 26px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .foot-btn.primary {
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    color: #fff;
+    font-weight: 600;
+  }
+  .foot-btn.secondary {
+    background: rgba(255,255,255,0.06);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .foot-btn:hover.primary { opacity: 0.9; }
+  .foot-btn:hover.secondary { background: rgba(255,255,255,0.1); color: var(--text); }
+  .foot-spacer { flex: 1; }
+
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  .fade-in { animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="header">
+    <div class="header-icon">🌐</div>
+    <div class="header-title">AI 截图翻译</div>
+    <div class="header-actions">
+      <button class="hbtn" id="pin-btn" title="固定窗口">📌</button>
+      <button class="hbtn close" id="close-btn" title="关闭">✕</button>
+    </div>
+  </div>
+
+  <div id="image-preview">
+    <img id="preview-img" src="" alt="截图">
+    <div class="img-overlay"></div>
+  </div>
+
+  <div id="status-bar">
+    <div class="status-dot loading" id="status-dot"></div>
+    <span class="status-text" id="status-text">正在识别图片内容...</span>
+    <span class="status-time" id="status-time"></span>
+  </div>
+
+  <div id="result-area">
+    <div id="result-text" class="loading-state loading-dots">识别图片中的文字</div>
+    <div id="error-text"></div>
+  </div>
+
+  <div id="footer">
+    <button class="foot-btn secondary" id="copy-src-btn" style="display:none;">📋 复制原文</button>
+    <button class="foot-btn primary" id="copy-btn" style="display:none;">📄 复制译文</button>
+    <div class="foot-spacer"></div>
+    <button class="foot-btn secondary" id="retry-btn" style="display:none;">↺ 重试</button>
+  </div>
+</div>
+
+<script>
+// ── 工具函数 ──
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+let imageData = null;
+let config = {};
+let resultText = '';
+let sourceText = '';
+let startTime = Date.now();
+
+window.electronAPI.on('translate-image', async (data) => {
+  imageData = data.imageData;
+  config = data.config;
+
+  // 显示图片预览
+  const preview = document.getElementById('image-preview');
+  const previewImg = document.getElementById('preview-img');
+  previewImg.src = imageData;
+  preview.style.display = 'block';
+
+  await processImage();
+});
+
+async function processImage() {
+  startTime = Date.now();
+  setStatus('loading', '正在识别并翻译...');
+  document.getElementById('result-text').className = 'loading-state loading-dots';
+  document.getElementById('result-text').textContent = '识别图片中的文字';
+  document.getElementById('error-text').classList.remove('show');
+  document.getElementById('copy-btn').style.display = 'none';
+  document.getElementById('copy-src-btn').style.display = 'none';
+  document.getElementById('retry-btn').style.display = 'none';
+
+  try {
+    // 使用视觉API翻译图片（发送base64图片到GPT-4V等支持视觉的API）
+    const result = await translateImageWithVision(imageData, config);
+
+    if (result.success) {
+      resultText = result.translation || '';
+      sourceText = result.source || '';
+      const rType = result.resultType || 'text';
+      const rExtra = result.extra || {};
+
+      document.getElementById('result-text').className = 'fade-in';
+
+      if (rType === 'word') {
+        // 单词词典模式 - 格式化显示
+        const parts = [];
+        parts.push('<div style="font-size:22px;font-weight:bold;margin-bottom:6px;">' + escapeHtml(sourceText) + '</div>');
+        if (rExtra.phonetic) parts.push('<div style="color:#7ec8e3;font-size:15px;margin-bottom:6px;">' + escapeHtml(rExtra.phonetic) + '</div>');
+        if (rExtra.partOfSpeech) parts.push('<div style="color:#aaa;font-size:13px;margin-bottom:8px;">' + escapeHtml(rExtra.partOfSpeech) + '</div>');
+        if (rExtra.enDef) parts.push('<div style="margin-bottom:4px;"><span style="color:#888;">EN</span> ' + escapeHtml(rExtra.enDef) + '</div>');
+        if (rExtra.zhDef) parts.push('<div style="margin-bottom:8px;"><span style="color:#888;">CN</span> ' + escapeHtml(rExtra.zhDef) + '</div>');
+        if (rExtra.example) parts.push('<div style="color:#999;font-size:13px;border-top:1px dashed #444;padding-top:6px;white-space:pre-wrap;">' + escapeHtml(rExtra.example) + '</div>');
+        document.getElementById('result-text').innerHTML = parts.join('');
+      } else if (rType === 'question') {
+        // 题目模式 - 显示答案和解析
+        const parts = [];
+        if (sourceText) parts.push('<div style="color:#888;font-size:12px;margin-bottom:8px;white-space:pre-wrap;border-bottom:1px dashed #333;padding-bottom:8px;">' + escapeHtml(sourceText) + '</div>');
+        if (rExtra.answer) parts.push('<div style="color:#4ade80;font-weight:bold;margin-bottom:4px;">答案: ' + escapeHtml(rExtra.answer) + '</div>');
+        if (rExtra.analysis) parts.push('<div style="color:#fbbf24;margin-bottom:8px;white-space:pre-wrap;">' + escapeHtml(rExtra.analysis) + '</div>');
+        if (result.translation) {
+          // translation在question模式下已包含answer+analysis+translation，取最后部分
+          parts.push('<div style="color:#aaa;font-size:13px;border-top:1px dashed #333;padding-top:6px;white-space:pre-wrap;">' + escapeHtml(result.translation) + '</div>');
+        }
+        document.getElementById('result-text').innerHTML = parts.join('');
+      } else {
+        // 普通翻译模式
+        if (sourceText) {
+          document.getElementById('result-text').innerHTML =
+            '<div style="color:#888;font-size:12px;margin-bottom:8px;white-space:pre-wrap;border-bottom:1px dashed #333;padding-bottom:8px;">' +
+            escapeHtml(sourceText) + '</div>' +
+            '<div style="white-space:pre-wrap;">' + escapeHtml(resultText) + '</div>';
+        } else {
+          document.getElementById('result-text').textContent = resultText;
+        }
+      }
+
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      setStatus('success', rType === 'word' ? '词典查询完成' : rType === 'question' ? '答题完成' : '翻译完成');
+      document.getElementById('status-time').textContent = elapsed + 's';
+
+      if (sourceText) {
+        document.getElementById('copy-src-btn').style.display = 'flex';
+      }
+      document.getElementById('copy-btn').style.display = 'flex';
+    } else {
+      throw new Error(result.error || '翻译失败');
+    }
+  } catch (err) {
+    setStatus('error', '翻译失败');
+    document.getElementById('result-text').textContent = '';
+    document.getElementById('result-text').className = '';
+    const errEl = document.getElementById('error-text');
+    errEl.textContent = '⚠ ' + (err.message || '翻译失败');
+    errEl.classList.add('show');
+    document.getElementById('retry-btn').style.display = 'flex';
+  }
+}
+
+async function translateImageWithVision(imageBase64, cfg) {
+  const langMap = {
+    'zh': '中文', 'en': '英文', 'ja': '日文', 'ko': '韩文',
+    'fr': '法文', 'de': '德文', 'es': '西班牙文', 'ru': '俄文',
+    'ar': '阿拉伯文', 'pt': '葡萄牙文', 'it': '意大利文'
+  };
+  const tgtName = langMap[cfg.targetLang] || cfg.targetLang || '中文';
+
+  const apiUrl = cfg.apiUrl || 'https://api.openai.com/v1/chat/completions';
+  const apiKey = cfg.apiKey || '';
+  const model = cfg.visionModel || cfg.apiModel || 'gpt-4o';
+
+  // 判断是否为智谱 API（智谱不支持 detail 参数）
+  const isZhipu = apiUrl.includes('bigmodel.cn');
+
+  // 使用JSON格式输出，结构清晰，模型更容易遵守
+  const systemPrompt = `你是图片内容智能分析助手。分析用户发送的图片，识别文字并判断内容类型，严格返回JSON。
+
+判断规则：
+- word：仅单个英文单词（无空格或仅有连字符）
+- question：包含问号、选项(A/B/C/D)、what/why/how等题目特征
+- text：其他内容
+
+返回JSON格式（只返回JSON，不要markdown代码块，不要解释）：
+
+如果是单词：
+{"type":"word","original":"识别到的单词","phonetic":"/美式IPA音标/","partOfSpeech":"n./v./adj.等","enDef":"英文释义","zhDef":"中文释义","example":"例句 + 翻译"}
+
+如果是题目：
+{"type":"question","original":"完整题目原文","answer":"正确答案","analysis":"详细解题步骤","translation":"题目答案解析的${tgtName}翻译"}
+
+如果是普通文本：
+{"type":"text","original":"识别到的所有原文","translation":"翻译成${tgtName}（专有名词标注美式音标）"}
+
+如果没有文字：
+{"type":"text","original":"","translation":"图片中未检测到文字内容"}`;
+
+  // 提取 base64 数据部分
+  let base64Data = imageBase64;
+  if (imageBase64.includes(',')) {
+    base64Data = imageBase64.split(',')[1];
+  }
+  // 检测图片 MIME 类型
+  let mimeType = 'image/png';
+  if (imageBase64.includes('data:')) {
+    const match = imageBase64.match(/data:(.*?);/);
+    if (match) mimeType = match[1];
+  }
+
+  // 智谱和 OpenAI 都使用 data:image/xxx;base64,xxx 格式，区别在于 OpenAI 多个 detail 字段
+  const dataUrl = `data:${mimeType};base64,${base64Data}`;
+
+  // 统一使用 system role（文档确认 glm-4v-flash 支持）
+  const messages = [
+    {
+      role: 'system',
+      content: systemPrompt
+    },
+    {
+      role: 'user',
+      content: [
+        {
+          type: 'image_url',
+          image_url: isZhipu
+            ? { url: dataUrl }
+            : { url: dataUrl, detail: 'high' }
+        },
+        {
+          type: 'text',
+          text: '请按规则识别并分析这张图片中的内容。'
+        }
+      ]
+    }
+  ];
+
+  const body = {
+    model: model,
+    messages: messages
+  };
+
+  // 智谱API不加 max_tokens 和 temperature，避免参数冲突
+  if (!isZhipu) {
+    body.max_tokens = 4096;
+    body.temperature = 0.1;
+  }
+
+  console.log('模型:', model, 'API:', apiUrl);
+  console.log('请求体预览:', JSON.stringify(body).substring(0, 500) + '...');
+  console.log('请求体长度:', JSON.stringify(body).length);
+
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + apiKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    // 打印完整错误信息到控制台，方便调试
+    console.error('API 错误详情:', JSON.stringify(err, null, 2));
+    // 显示完整错误信息给用户
+    const errMsg = err.error?.message || err.message || `API 错误 ${response.status}`;
+    const fullErr = JSON.stringify({ code: err.error?.code, message: err.error?.message, type: err.error?.type, status: response.status }, null, 0);
+    throw new Error(errMsg + ' (详情: ' + fullErr + ')');
+  }
+
+  const data = await response.json();
+  let content = data.choices?.[0]?.message?.content?.trim() || '';
+
+  console.log('模型原始输出:', content);
+
+  let source = '';
+  let translation = '';
+  let resultType = 'text';
+  let extra = {}; // 单词/题目的额外信息
+
+  // 尝试JSON解析
+  try {
+    let jsonStr = content.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+    const parsed = JSON.parse(jsonStr);
+    resultType = parsed.type || 'text';
+    source = parsed.original || '';
+    translation = parsed.translation || '';
+
+    if (resultType === 'word') {
+      extra = {
+        phonetic: parsed.phonetic || '',
+        partOfSpeech: parsed.partOfSpeech || '',
+        enDef: parsed.enDef || '',
+        zhDef: parsed.zhDef || '',
+        example: parsed.example || ''
+      };
+      // source存单词，translation存完整释义用于显示
+      source = parsed.original || '';
+      translation = parsed.zhDef || '';
+    } else if (resultType === 'question') {
+      extra = {
+        answer: parsed.answer || '',
+        analysis: parsed.analysis || ''
+      };
+      source = parsed.original || '';
+      translation = (parsed.answer || '') + '\n' + (parsed.analysis || '') + '\n' + (parsed.translation || '');
+    }
+  } catch (e) {
+    console.warn('JSON解析失败，尝试回退:', e.message);
+    // 回退：尝试标签格式
+    if (content.includes('[原文]') && content.includes('[译文]')) {
+      const srcMatch = content.match(/\[原文\]\s*([\s\S]*?)(?:\[译文\]|$)/);
+      const tgtMatch = content.match(/\[译文\]\s*([\s\S]*?)$/);
+      source = srcMatch ? srcMatch[1].trim() : '';
+      translation = tgtMatch ? tgtMatch[1].trim() : '';
+    } else {
+      source = '';
+      translation = content;
+    }
+  }
+
+  return { success: true, source, translation, resultType, extra };
+}
+
+function setStatus(type, text) {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  dot.className = 'status-dot ' + type;
+  txt.textContent = text;
+}
+
+// ── 事件 ──
+document.getElementById('close-btn').addEventListener('click', () => {
+  window.electronAPI.closeResult();
+});
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  if (resultText) {
+    window.electronAPI.copyText(resultText);
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ 已复制';
+    setTimeout(() => { btn.textContent = '📄 复制译文'; }, 1500);
+  }
+});
+
+document.getElementById('copy-src-btn').addEventListener('click', () => {
+  if (sourceText) {
+    window.electronAPI.copyText(sourceText);
+    const btn = document.getElementById('copy-src-btn');
+    btn.textContent = '✓ 已复制';
+    setTimeout(() => { btn.textContent = '📋 复制原文'; }, 1500);
+  }
+});
+
+document.getElementById('retry-btn').addEventListener('click', () => {
+  if (imageData) processImage();
+});
+
+let pinned = false;
+document.getElementById('pin-btn').addEventListener('click', () => {
+  pinned = !pinned;
+  document.getElementById('pin-btn').textContent = pinned ? '📍' : '📌';
+  document.getElementById('pin-btn').title = pinned ? '取消固定' : '固定窗口';
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') window.electronAPI.closeResult();
+  if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+    if (resultText) window.electronAPI.copyText(resultText);
+  }
+});
+</script>
+</body>
+</html>

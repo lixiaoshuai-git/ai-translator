@@ -1,0 +1,63 @@
+{
+  "name": "ai-translator",
+  "version": "1.0.0",
+  "description": "本地ai翻译助手,支持文本和截图翻译,基于大模型api调用和electron构建",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir"
+  },
+  "keywords": [],
+  "author": "苑泽宇",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^35.7.5",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "app-builder-bin": "^4.2.0",
+    "axios": "^1.7.0",
+    "builder-util": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.aitranslator.app",
+    "productName": "AI翻译助手",
+    "directories": {
+      "output": "../release"
+    },
+    "files": [
+      "src/**/*",
+      "renderer/**/*",
+      "assets/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "AI翻译助手"
+    },
+    "portable": {
+      "artifactName": "AI翻译助手-便携版.exe"
+    }
+  }
+}
