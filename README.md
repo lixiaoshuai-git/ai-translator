@@ -165,7 +165,7 @@ npm run build
 ## 👨‍💻 作者
 
 <p align="center">
-  <b>🌟 苑泽宇 🌟</b><br>
+  <b>🌟 Alan also 李小帅 🌟</b><br>
   <i>四川大学软件工程 · 大二</i><br>
   📧 联系方式：请在 GitHub 留言
 </p>
