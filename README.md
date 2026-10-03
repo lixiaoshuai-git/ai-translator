@@ -9,7 +9,7 @@
   <a href="https://electronjs.org"><img src="https://img.shields.io/badge/Electron-35.7.5-9FE870?style=for-the-badge&logo=electron&logoColor=white"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-24.x-green?style=for-the-badge&logo=nodedotjs&logoColor=white"></a>
   <a href="https://open.bigmodel.cn"><img src="https://img.shields.io/badge/AI-智谱GLM-ff6b6b?style=for-the-badge&logo=openai&logoColor=white"></a>
-  <img src="https://img.shields.io/badge/License-ISC-purple?style=for-the-badge">
+  <img src="https://img.shields.io/badge/License-MIT-purple?style=for-the-badge">
 </p>
 
 <p align="center">
@@ -55,7 +55,7 @@
 ## 📂 项目结构
 
 ```
-📦 ai-translator-v2-src/
+📦 ai-translator/
 ├── 🟡 src/
 │   ├── 🟢 main.js          # 主进程
 │   └── 🔵 preload.js       # 预加载脚本
@@ -154,10 +154,10 @@ npm run build
 ## 📊 项目统计
 
 <p align="center">
-  <img src="https://img.shields.io/github/repo-size/yourusername/ai-translator?style=for-the-badge&color=blue">
-  <img src="https://img.shields.io/github/last-commit/yourusername/ai-translator?style=for-the-badge&color=green">
-  <img src="https://img.shields.io/github/issues/yourusername/ai-translator?style=for-the-badge&color=red">
-  <img src="https://img.shields.io/github/stars/yourusername/ai-translator?style=for-the-badge&color=yellow">
+  <img src="https://img.shields.io/github/repo-size/lixiaoshuai-git/ai-translator?style=for-the-badge&color=blue">
+  <img src="https://img.shields.io/github/last-commit/lixiaoshuai-git/ai-translator?style=for-the-badge&color=green">
+  <img src="https://img.shields.io/github/issues/lixiaoshuai-git/ai-translator?style=for-the-badge&color=red">
+  <img src="https://img.shields.io/github/stars/lixiaoshuai-git/ai-translator?style=for-the-badge&color=yellow">
 </p>
 
 ---
@@ -165,9 +165,9 @@ npm run build
 ## 👨‍💻 作者
 
 <p align="center">
-  <b>🌟 Alan also 李小帅 🌟</b><br>
-  <i>四川大学软件工程 · 大二</i><br>
-  📧 联系方式：请在 GitHub 留言
+  <b>🌟 苑泽宇 (Alan) 🌟</b><br>
+  <i>四川大学 · 软件工程</i><br>
+  🔗 <a href="https://github.com/lixiaoshuai-git">github.com/lixiaoshuai-git</a>
 </p>
 
 ---
@@ -175,7 +175,7 @@ npm run build
 ## 📜 许可证
 
 ```
-ISC License
+MIT License
 ```
 
 ---

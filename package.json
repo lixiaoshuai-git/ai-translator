@@ -9,8 +9,8 @@
     "pack": "electron-builder --dir"
   },
   "keywords": [],
-  "author": "苑泽宇",
-  "license": "ISC",
+  "author": "苑泽宇 (Alan)",
+  "license": "MIT",
   "devDependencies": {
     "electron": "^35.7.5",
     "electron-builder": "^25.1.8"
